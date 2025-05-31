@@ -12,7 +12,7 @@ public enum ErrorCode {
      * 400 Bad Request
      */
     BAD_REQUEST(HttpStatus.BAD_REQUEST, "잘못된 요청입니다."),
-    INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "ENUM 입력값이 올바르지 않습니다."),
+    INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "입력값이 올바르지 않습니다."),
 
     /**
      * 401 Unauthorized
@@ -101,7 +101,9 @@ public enum ErrorCode {
      */
     CHALLENGE_NOT_FOUND(HttpStatus.NOT_FOUND, "챌린지가 존재하지 않습니다."),
     ALREADY_ACCUMULATED_TODAY(HttpStatus.BAD_REQUEST,"오늘은 이미 적립이 완료되었습니다."),
-    CHALLENGE_ALREADY_COMPLETED_OR_CANCELED(HttpStatus.BAD_REQUEST, "카페에서 진행중인 챌린지가 아닙니다.")
+    CHALLENGE_ALREADY_COMPLETED_OR_CANCELED(HttpStatus.BAD_REQUEST, "카페에서 진행중인 챌린지가 아닙니다."),
+    CHALLENGE_OVER_REQUEST(HttpStatus.BAD_REQUEST, "전체 적립 개수보다 더 많이 취소할 수 없습니다."),
+    CHALLENGE_PARTICIPATION_NOT_FOUND(HttpStatus.NOT_FOUND, "챌린지에 참여하지 않는 고객입니다.")
 
 
     ;

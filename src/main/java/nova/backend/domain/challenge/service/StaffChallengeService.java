@@ -1,9 +1,11 @@
 package nova.backend.domain.challenge.service;
 
 import lombok.RequiredArgsConstructor;
-import nova.backend.domain.challenge.entity.Challenge;
-import nova.backend.domain.challenge.entity.ChallengeParticipation;
-import nova.backend.domain.challenge.entity.ParticipationStatus;
+import nova.backend.domain.challenge.dto.request.ChallengeAccumulateRequestDTO;
+import nova.backend.domain.challenge.dto.request.ChallengeCancelRequestDTO;
+import nova.backend.domain.challenge.entity.*;
+import nova.backend.domain.challenge.entity.status.ParticipationStatus;
+import nova.backend.domain.challenge.repository.ChallengeAccumulationRepository;
 import nova.backend.domain.challenge.repository.ChallengeParticipationRepository;
 import nova.backend.domain.challenge.repository.ChallengeRepository;
 import nova.backend.domain.user.entity.User;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -23,56 +26,89 @@ public class StaffChallengeService {
     private final UserRepository userRepository;
     private final ChallengeRepository challengeRepository;
     private final ChallengeParticipationRepository participationRepository;
+    private final ChallengeAccumulationRepository accumulationRepository;
 
-    public void accumulateOngoingChallengeForCafe(Long cafeId, String qrCodeValue) {
-        // 1. 유저 조회
-        User user = userRepository.findByQrCodeValue(qrCodeValue)
+    @Transactional
+    public void accumulateOngoingChallengeForCafe(Long cafeId, ChallengeAccumulateRequestDTO request) {
+        // QR로 사용자 찾기
+        User user = userRepository.findByQrCodeValue(request.qrCodeValue())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        // 2. 진행 중인 챌린지 조회
+        // 오늘 날짜에 진행 중인 챌린지 찾기
         Challenge challenge = challengeRepository
                 .findFirstByCafe_CafeIdAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
                         cafeId, LocalDate.now(), LocalDate.now())
                 .orElseThrow(() -> new BusinessException(ErrorCode.CHALLENGE_NOT_FOUND));
 
-        // 3. 참여 내역 조회 또는 자동 생성
+        // 참여 내역 찾거나 새로 생성
         ChallengeParticipation participation = participationRepository
                 .findByChallenge_ChallengeIdAndUser_UserId(challenge.getChallengeId(), user.getUserId())
-                .orElseGet(() -> {
-                    ChallengeParticipation newParticipation = ChallengeParticipation.builder()
-                            .challenge(challenge)
-                            .user(user)
-                            .participationStatus(ParticipationStatus.IN_PROGRESS)
-                            .challengeStatus(ParticipationStatus.IN_PROGRESS)
-                            .completedCount(0)
-                            .build();
-                    return participationRepository.save(newParticipation);
-                });
+                .orElseGet(() -> participationRepository.save(ChallengeParticipation.createNew(challenge, user)));
 
-        // 4. 상태 확인
-        if (participation.getChallengeStatus() != ParticipationStatus.IN_PROGRESS) {
+        // 이미 완료 또는 취소된 챌린지이거나, 사용자가 자발적으로 참여 중단한 챌린지면 에러
+        if (!participation.isInProgress() || participation.getParticipationStatus() == ParticipationStatus.CANCELED) {
             throw new BusinessException(ErrorCode.CHALLENGE_ALREADY_COMPLETED_OR_CANCELED);
         }
 
-        // 5. 하루에 한 번만 적립 확인
-        if (hasAccumulatedToday(participation)) {
-            throw new BusinessException(ErrorCode.ALREADY_ACCUMULATED_TODAY);
-        }
+        // 적립 생성 및 저장
+        ChallengeAccumulation accumulation = ChallengeAccumulation.create(participation, request.accumulateCount());
+        accumulationRepository.save(accumulation);
 
-        // 6. 적립 및 상태 변경
-        participation.incrementCompletedCount(challenge.getSuccessCount());
+        // 누적 총합 재계산
+        int total = accumulationRepository
+                .findByParticipation_ParticipationIdOrderByCreatedAtDesc(participation.getParticipationId())
+                .stream()
+                .mapToInt(ChallengeAccumulation::getAccumulatedCount)
+                .sum();
+
+        participation.updateCompletedCount(total);
+        participationRepository.save(participation);
     }
 
-    private boolean hasAccumulatedToday(ChallengeParticipation participation) {
-        if (participation.getCompletedCount() == 0) { // 처음 적립하는 경우는 통과
-            return false;
-        }
-        LocalDate today = LocalDate.now();
-        return participation.getUpdatedAt() != null &&
-                participation.getUpdatedAt().toLocalDate().isEqual(today);
-    }
 
+    @Transactional
+    public void cancelAccumulationsByQr(Long cafeId, ChallengeCancelRequestDTO request) {
+        request.validate();
+
+        User user = userRepository.findByQrCodeValue(request.qrCodeValue())
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        Challenge challenge = challengeRepository
+                .findFirstByCafe_CafeIdAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
+                        cafeId, LocalDate.now(), LocalDate.now())
+                .orElseThrow(() -> new BusinessException(ErrorCode.CHALLENGE_NOT_FOUND));
+
+        ChallengeParticipation participation = participationRepository
+                .findByChallenge_ChallengeIdAndUser_UserId(challenge.getChallengeId(), user.getUserId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.CHALLENGE_PARTICIPATION_NOT_FOUND));
+
+        List<ChallengeAccumulation> accumulations = accumulationRepository
+                .findByParticipation_ParticipationIdOrderByCreatedAtDesc(participation.getParticipationId());
+
+        int remaining = request.count();
+
+        for (ChallengeAccumulation accumulation : accumulations) {
+            if (remaining <= 0) break;
+            int value = accumulation.getAccumulatedCount();
+            if (remaining >= value) {
+                remaining -= value;
+                accumulationRepository.delete(accumulation);
+            } else {
+                accumulation.decreaseAccumulatedCount(remaining);
+                remaining = 0;
+            }
+        }
+
+        if (remaining > 0) {
+            throw new BusinessException(ErrorCode.CHALLENGE_OVER_REQUEST);
+        }
+
+        int total = accumulationRepository
+                .findByParticipation_ParticipationIdOrderByCreatedAtDesc(participation.getParticipationId())
+                .stream()
+                .mapToInt(ChallengeAccumulation::getAccumulatedCount)
+                .sum();
+
+        participation.updateCompletedCount(total);
+    }
 }
-
-
-
