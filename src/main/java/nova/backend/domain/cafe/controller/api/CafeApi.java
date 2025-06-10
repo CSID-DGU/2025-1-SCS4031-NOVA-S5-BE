@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
-@Tag(name = "2. 유저(USER) 카페", description = "카페 목록 관련 API")
+@Tag(name = "1. 카페(USER)", description = "카페 목록 관련 API")
 public interface CafeApi {
 
     @Operation(

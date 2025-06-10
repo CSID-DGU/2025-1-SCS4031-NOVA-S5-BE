@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-@Tag(name = "3. 챌린지(STAFF) API", description = "직원/사장용 챌린지 적립 API")
+@Tag(name = "2. 챌린지(STAFF/OWNER) API", description = "직원/사장용 챌린지 적립 API")
 @RequestMapping("/api/challenges/staff")
 @SecurityRequirement(name = "token")
 public interface StaffChallengeApi {

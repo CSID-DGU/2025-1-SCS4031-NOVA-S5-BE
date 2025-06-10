@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 
-@Tag(name = "3. 카페(OWNER/STAFF) 카페 선택 API", description = "로그인 후 현재 선택할 카페를 설정하는 API")
+@Tag(name = "2. 카페(STAFF) 카페 선택 API", description = "로그인 후 현재 선택할 카페를 설정하는 API")
 public interface StaffCafeApi {
 
     @Operation(

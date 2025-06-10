@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-@Tag(name = "3. 카페(OWNER/STAFF) 스탬프", description = "스탬프 적립 및 조회 API (카페 선택 이후 사용 가능)")
+@Tag(name = "2. 스탬프(STAFF) ", description = "스탬프 적립 및 조회 API (카페 선택 이후 사용 가능)")
 public interface StaffStampApi {
 
     @Operation(

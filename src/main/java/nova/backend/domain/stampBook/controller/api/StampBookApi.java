@@ -19,7 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-@Tag(name = "2. 유저(USER) 스탬프북", description = "스탬프북 관련 API, 스탬프는 단일 스탬프지만 스탬프북은 한 장을 관리합니다.")
+@Tag(name = "1. 스탬프북(USER)", description = "스탬프북 관련 API, 스탬프는 단일 스탬프지만 스탬프북은 한 장을 관리합니다.")
 public interface StampBookApi {
 
     @Operation(

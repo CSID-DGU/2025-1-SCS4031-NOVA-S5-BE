@@ -16,7 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PatchMapping;
 
-@Tag(name = "3. 카페(OWNER/STAFF) 스탬프북", description = "사장/직원용 리워드 사용 API (카페 선택 후 사용 가능)")
+@Tag(name = "2. 스탬프북(STAFF)", description = "사장/직원용 리워드 사용 API (카페 선택 후 사용 가능)")
 public interface StaffStampBookApi {
 
     @Operation(

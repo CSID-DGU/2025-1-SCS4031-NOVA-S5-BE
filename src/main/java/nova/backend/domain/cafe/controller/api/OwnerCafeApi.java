@@ -22,7 +22,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-@Tag(name = "4. 카페(OWNER) API", description = "카페 등록/관리 API")
+@Tag(name = "3. 카페(OWNER) API", description = "카페 등록/관리 API")
 public interface OwnerCafeApi {
 
     @Operation(

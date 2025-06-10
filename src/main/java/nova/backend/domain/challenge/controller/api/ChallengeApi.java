@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
-@Tag(name = "2. 챌린지", description = "챌린지 관련 API")
+@Tag(name = "1. 챌린지(USER)", description = "유저 챌린지 관련 API")
 public interface ChallengeApi {
 
     @PatchMapping("/{challengeId}/withdraw")

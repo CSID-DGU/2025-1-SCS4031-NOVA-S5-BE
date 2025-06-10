@@ -17,7 +17,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 
-@Tag(name = "4. 챌린지(OWNER) API", description = "사장용 챌린지 생성 및 조회")
+@Tag(name = "3. 챌린지(OWNER) API", description = "사장용 챌린지 생성 및 조회")
 @RequestMapping("/api/owner/challenges")
 @SecurityRequirement(name = "token")
 public interface OwnerChallengeApi {
